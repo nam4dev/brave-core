@@ -76,8 +76,10 @@ class AdsServiceImpl : public AdsService,
   void SetConfirmationsIsReady(const bool is_ready) override;
   void IsSupportedRegion(
       IsSupportedRegionCallback callback) override;
+  bool IsTestingEnv() override;
 
   void Shutdown() override;
+  void MaybeShowFirstLaunchNotification() override;
 
  private:
   friend class AdsNotificationHandler;
@@ -192,7 +194,6 @@ class AdsServiceImpl : public AdsService,
   bool ShouldShowAdsNotification();
   void FirstLaunchNotificationTimedOut(uint32_t timer_id,
                                        const std::string& notification_id);
-  void MaybeShowFirstLaunchNotification();
 
   uint32_t next_timer_id();
 
