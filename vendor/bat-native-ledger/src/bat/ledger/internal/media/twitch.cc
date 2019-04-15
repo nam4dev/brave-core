@@ -37,8 +37,9 @@ MediaTwitch::~MediaTwitch() {
 }
 
 // static
-std::string MediaTwitch::GetMediaIdFromParts(
+std::pair<std::string, std::string> MediaTwitch::GetMediaIdFromParts(
     const std::map<std::string, std::string>& parts) {
+  std::string user_id;
   std::map<std::string, std::string>::const_iterator iter =
         parts.find("event");
   if (iter != parts.end() && parts.find("properties") != parts.end()) {
@@ -49,6 +50,7 @@ std::string MediaTwitch::GetMediaIdFromParts(
         std::string id("");
         if (iter != parts.end()) {
           id = iter->second;
+          user_id = id;
         }
         iter = parts.find("vod");
         if (iter != parts.end()) {
@@ -58,12 +60,12 @@ std::string MediaTwitch::GetMediaIdFromParts(
           }
         }
 
-        return id;
+        return std::make_pair(id, user_id);
       }
     }
   }
 
-  return std::string();
+  return std::make_pair(std::string(), std::string());
 }
 
 // static
@@ -295,7 +297,9 @@ void MediaTwitch::OnMediaActivityError(const ledger::VisitData& visit_data,
 
 void MediaTwitch::ProcessMedia(const std::map<std::string, std::string>& parts,
                                const ledger::VisitData& visit_data) {
-  std::string media_id = GetMediaIdFromParts(parts);
+  std::pair<std::string, std::string> site_ids(GetMediaIdFromParts(parts));
+  std::string media_id = site_ids.first;
+  std::string user_id = site_ids.second;
   if (media_id.empty()) {
     return;
   }
@@ -323,6 +327,7 @@ void MediaTwitch::ProcessMedia(const std::map<std::string, std::string>& parts,
                 twitch_info,
                 visit_data,
                 0,
+                user_id,
                 _1,
                 _2));
 }
@@ -368,6 +373,7 @@ void MediaTwitch::OnMediaPublisherInfo(
     const ledger::TwitchEventInfo& twitch_info,
     const ledger::VisitData& visit_data,
     const uint64_t window_id,
+    const std::string& user_id,
     ledger::Result result,
     std::unique_ptr<ledger::PublisherInfo> publisher_info) {
   if (result != ledger::Result::LEDGER_OK &&
@@ -414,7 +420,7 @@ void MediaTwitch::OnMediaPublisherInfo(
       }
 
       std::string new_id = media_props[0];
-      std::string media_url = GetMediaURL(new_id);
+      std::string media_url = GetMediaURL(user_id);
       std::string oembed_url =
           (std::string)TWITCH_VOD_URL + media_props[media_props.size() - 1];
       updated_visit_data.name = new_id;
@@ -428,6 +434,7 @@ void MediaTwitch::OnMediaPublisherInfo(
           media_url,
           updated_visit_data,
           window_id,
+          user_id,
           _1,
           _2,
           _3);
@@ -491,6 +498,7 @@ void MediaTwitch::OnEmbedResponse(
     const std::string& media_url,
     const ledger::VisitData& visit_data,
     const uint64_t window_id,
+    const std::string& user_id,
     int response_status_code,
     const std::string& response,
     const std::map<std::string, std::string>& headers) {
@@ -508,8 +516,7 @@ void MediaTwitch::OnEmbedResponse(
   std::string author_name;
   braveledger_bat_helper::getJSONValue("author_name", response, &author_name);
 
-  std::string twitchMediaID = visit_data.name;
-  std::string id = (std::string)TWITCH_MEDIA_TYPE + "#author:" + twitchMediaID;
+  std::string id = (std::string)TWITCH_MEDIA_TYPE + "#author:" + user_id;
 
   ledger::VisitData updated_visit_data(visit_data);
   updated_visit_data.name = author_name;
