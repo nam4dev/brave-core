@@ -75,18 +75,22 @@ export class WelcomePage extends React.Component<Props, State> {
   }
 
   onClickSlideBullet = (nextScreen: number) => {
+    console.log('BSC]] slide bullet')
     this.setState({ currentScreen: nextScreen })
   }
 
   onClickNext = () => {
+    console.log('BSC]] next')
     this.setState({ currentScreen: this.state.currentScreen + 1 })
   }
 
   onClickDone = () => {
+    console.log('BSC]] done')
     this.props.actions.goToTabRequested('chrome://newtab', '_self')
   }
 
   onClickSkip = () => {
+    console.log('BSC]] skip')
     this.props.actions.goToTabRequested('chrome://newtab', '_self')
   }
 
