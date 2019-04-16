@@ -41,33 +41,33 @@ export const rewardsPanelReducer = (state: RewardsExtension.State | undefined, a
       state.walletCreated = false
       state.walletCorrupted = false
       break
-    case types.ON_WALLET_CREATED:
+    case types.ON_WALLET_INITIALIZED: {
+      const result = payload.result
       state = { ...state }
-      state.walletCreated = true
-      state.walletCreateFailed = false
-      state.walletCreating = false
-      state.walletCorrupted = false
-      chrome.braveRewards.saveAdsSetting('adsEnabled', 'true')
-      chrome.storage.local.get(['is_dismissed'], function (result) {
-        if (result && result['is_dismissed'] === 'false') {
-          chrome.browserAction.setBadgeText({
-            text: ''
-          })
-          chrome.storage.local.remove(['is_dismissed'])
-        }
-      })
+      if (result === 12) {  // ledger::Result::WALLET_CREATED
+        state.walletCreated = true
+        state.walletCreateFailed = false
+        state.walletCreating = false
+        state.walletCorrupted = false
+        chrome.braveRewards.saveAdsSetting('adsEnabled', 'true')
+        chrome.storage.local.get(['is_dismissed'], function (result) {
+          if (result && result['is_dismissed'] === 'false') {
+            chrome.browserAction.setBadgeText({
+              text: ''
+            })
+            chrome.storage.local.remove(['is_dismissed'])
+          }
+        })
+      } else if (result === 17) {  // ledger::Result::WALLET_CORRUPTED
+        state.walletCorrupted = true
+      } else if (result !== 0) { // anything other than ledger::Result::LEDGER_OK
+        state.walletCreateFailed = true
+        state.walletCreating = false
+        state.walletCreated = false
+        state.walletCorrupted = false
+      }
       break
-    case types.ON_WALLET_CREATE_FAILED:
-      state = { ...state }
-      state.walletCreateFailed = true
-      state.walletCreating = false
-      state.walletCreated = false
-      state.walletCorrupted = false
-      break
-    case types.ON_WALLET_CORRUPTED:
-      state = { ...state }
-      state.walletCorrupted = true
-      break
+    }
     case types.ON_TAB_ID:
       if (payload.tabId) {
         getTabData(payload.tabId)
