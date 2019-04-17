@@ -73,14 +73,7 @@ pipeline {
                     if [ "${BRANCH_EXISTS_IN_BB}" = "false" ]; then
                         git checkout -b ${BRANCH_TO_BUILD}
 
-                        echo "Pinning brave-core to branch ${BRANCH_TO_BUILD}..."
-                        jq "del(.config.projects[\\"brave-core\\"].branch) | .config.projects[\\"brave-core\\"].branch=\\"${BRANCH_TO_BUILD}\\"" package.json > package.json.new
-                        mv package.json.new package.json
-
-                        echo "Committing..."
-                        git commit --all --message "pin brave-core to branch ${BRANCH_TO_BUILD}"
-
-                        echo "Pushing changes..."
+                        echo "Pushing branch ..."
                         git push ${BB_REPO}
                     else
                         git checkout ${BRANCH_TO_BUILD}
